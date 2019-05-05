@@ -11,6 +11,7 @@ import (
 )
 
 var db *mongo.Database
+var characters *mongo.Collection
 
 func getPassword() string {
 	fmt.Print("Mongo Password: ")
@@ -39,11 +40,12 @@ func configDB(ctx context.Context, hasAuth bool, userName string, host string, p
 }
 
 func init() {
-	ctx := context.Background()
 	fmt.Println("Initiating mongo driver...")
 	var err error
-	db, err = configDB(ctx, false, "", "127.0.0.1", "27041", "dnddb")
+	db, err = configDB(context.Background(), false, "", "127.0.0.1", "27041", "dnddb")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	characters = db.Collection("characters")
+	fmt.Println(FindCharacter("5cce4e513a5e16f2792eeba7"))
 }

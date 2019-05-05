@@ -3,7 +3,8 @@ package main
 import (
 	"flag"
 
-	"github.com/rtfreedman/DMinimal/backend/api"
+	"github.com/rtfreedman/DocumentsAndDragons/backend/api"
+	_ "github.com/rtfreedman/DocumentsAndDragons/backend/store"
 )
 
 var port int
