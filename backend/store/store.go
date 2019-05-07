@@ -6,12 +6,19 @@ import (
 	"log"
 	"syscall"
 
-	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
 var db *mongo.Database
+var abilityCollection *mongo.Collection
+var backgroundCollection *mongo.Collection
+var characterCollection *mongo.Collection
+var itemCollection *mongo.Collection
+var raceCollection *mongo.Collection
+var spellCollection *mongo.Collection
+
+var collectionMap map[string]*mongo.Collection
 
 func init() {
 	fmt.Println("Initiating mongo driver...")
@@ -26,16 +33,15 @@ func init() {
 	backgroundCollection = db.Collection("background")
 	itemCollection = db.Collection("items")
 	characterCollection = db.Collection("characters")
-	baseCharacterCollection = db.Collection("baseCharacters")
-	item := Item{
-		Name:        "Bracers of Defense",
-		Description: "Bracers of Defense description",
-		Equip: Filter{
-			{{"$inc", bson.E{"armorClass", 1}}},
-		},
+	collectionMap = map[string]*mongo.Collection{
+		"ability":    abilityCollection,
+		"background": backgroundCollection,
+		"character":  characterCollection,
+		"item":       itemCollection,
+		"race":       raceCollection,
+		"spell":      spellCollection,
 	}
-	fmt.Println(AddItem(context.Background(), &item))
-	character := Character{
+	character := Document{
 		Name:       "Rorik Ironforge",
 		ArmorClass: 15,
 		AbilityScores: AbilityScores{

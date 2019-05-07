@@ -1,7 +1,6 @@
 package store
 
 import (
-	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
 
@@ -14,7 +13,6 @@ type Ability struct {
 	MaxCharges        int                `bson:"maxCharges,omitempty"`
 	RechargeCondition int                `bson:"rechargeCondition,omitempty"`
 	Active            bool               `bson:"active,omitempty"` // vs passive
-	Use               Filter             `bson:"use,omitempty"`
 }
 
 // AbilityScores represents the ability scores of a character
@@ -33,15 +31,22 @@ type Background struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty"`
 	Name        string             `bson:"name,omitempty"`
 	Description string             `bson:"description,omitempty"`
-	Alter       Filter             `bson:"alter,omitempty"`
 }
 
-// Character is what is returned back to the user. This object is derived from the Base Character and all other filters applied
-type Character struct {
+// Class represents a character's class
+type Class struct {
+	ID    primitive.ObjectID `bson:"_id,omitempty"`
+	Level int                `bson:"level,omitempty"`
+}
+
+// Document represents the shape of documents we expect out of mongo
+type Document struct {
 	ID              primitive.ObjectID `bson:"_id,omitempty"`
 	User            primitive.ObjectID `bson:"user,omitempty"`
 	Campaign        primitive.ObjectID `bson:"campaign,omitempty"`
 	Name            string             `bson:"name,omitempty"`
+	Advantages      []string           `bson:"disadvantages,omitempty"`
+	Disadvantages   []string           `bson:"advantages,omitempty"`
 	AbilityScores   AbilityScores      `bson:"abilityScores,omitempty"`
 	ArmorClass      int                `bson:"armorClass,omitempty"`
 	Proficient      []string           `bson:"proficient,omitempty"` // proficiencies is derived from proficient
@@ -59,8 +64,8 @@ type Character struct {
 	Race            Race               `bson:"race,omitempty"`
 	Background      Background         `bson:"background,omitempty"`
 	Classes         []Class            `bson:"class,omitempty"`
-	Inventory       []Item             `bson:"inventory,omitempty"`
-	Abilities       map[string]Ability `bson:"abilities,omitempty"`
+	Inventory       Inventory          `bson:"inventory,omitempty"`
+	Abilities       []Ability          `bson:"abilities,omitempty"`
 	Spells          Spells             `bson:"spells,omitempty"`
 	SpellSlots      Spells             `bson:"spellSlots,omitempty"`
 	AvailableSpells AvailableSpells    `bson:"availableSpells,omitempty"`
@@ -70,6 +75,43 @@ type Character struct {
 type Inventory struct {
 	IncrementalID int    `bson:"incrementalID,omitempty"`
 	items         []Item `bson:"items,omitempty"`
+}
+
+// Item represents one of a character's items
+type Item struct {
+	ID                 primitive.ObjectID `bson:"_id,omitempty"`
+	InventoryID        int                `bson:"inventoryID,omitempty"`
+	Name               string             `bson:"name,omitempty"`
+	Charges            int                `bson:"charges,omitempty"`
+	MaxCharges         int                `bson:"maxCharges,omitempty"`
+	Description        string             `bson:"description,omitempty"`
+	RechargeCondition  int                `bson:"rechargeCondition,omitempty"`
+	AttunementRequired bool               `bson:"attunementRequired,omitempty"`
+	Attuned            bool               `bson:"attuned,omitempty"`
+	Price              int                `bson:"price,omitempty"`
+	Count              int                `bson:"count,omitempty"`
+	Weight             int                `bson:"weight,omitempty"`
+	Equipped           bool               `bson:"equipped,omitempty"`
+	Stackable          bool               `bson:"stackable,omitempty"`
+}
+
+// Race represents a character's race
+type Race struct {
+	ID          primitive.ObjectID `bson:"_id,omitempty"`
+	Name        string             `bson:"name,omitempty"`
+	Description string             `bson:"description,omitempty"`
+}
+
+// Spell represents an individual spell that a character has the ability to learn
+type Spell struct {
+	ID            primitive.ObjectID `bson:"_id,omitempty"`
+	Name          string             `bson:"name,omitempty"`
+	Description   string             `bson:"description,omitempty"`
+	CastingTime   string             `bson:"castingTime,omitempty"`
+	Components    string             `bson:"components,omitempty"`
+	Concentration bool               `bson:"concentration,omitempty"`
+	Duration      string             `bson:"duration,omitempty"`
+	Level         int                `bson:"level,omitempty"`
 }
 
 // Spells represent a character's spell shapes
@@ -87,66 +129,13 @@ type Spells struct {
 
 // AvailableSpells are the spells available to the character
 type AvailableSpells struct {
-	First   []string `bson:"1,omitempty"`
-	Second  []string `bson:"2,omitempty"`
-	Third   []string `bson:"3,omitempty"`
-	Fourth  []string `bson:"4,omitempty"`
-	Fifth   []string `bson:"5,omitempty"`
-	Sixth   []string `bson:"6,omitempty"`
-	Seventh []string `bson:"7,omitempty"`
-	Eighth  []string `bson:"8,omitempty"`
-	Ninth   []string `bson:"9,omitempty"`
-}
-
-// Class represents a character's class
-type Class struct {
-	ID    primitive.ObjectID `bson:"_id,omitempty"`
-	Level int                `bson:"level,omitempty"`
-	Name  string             `bson:"name,omitempty"`
-	Alter map[int]Filter     `bson:"alter,omitempty"` // changes per level
-}
-
-// Filter represents the changes that take place on the character object when an object is used or equipped
-type Filter []bson.D
-
-// Item represents one of a character's items
-type Item struct {
-	ID                 primitive.ObjectID `bson:"_id,omitempty"`
-	InventoryID        int                `bson:"inventoryID,omitempty"`
-	Name               string             `bson:"name,omitempty"`
-	Charges            int                `bson:"charges,omitempty"`
-	MaxCharges         int                `bson:"maxCharges,omitempty"`
-	Description        string             `bson:"description,omitempty"`
-	RechargeCondition  int                `bson:"rechargeCondition,omitempty"`
-	AttunementRequired bool               `bson:"attunementRequired,omitempty"`
-	Attuned            bool               `bson:"attuned,omitempty"`
-	Price              int                `bson:"price,omitempty"`
-	Count              int                `bson:"count,omitempty"`
-	Weight             int                `bson:"weight,omitempty"`
-	Use                Filter             `bson:"use,omitempty"`
-	Equip              Filter             `bson:"equip,omitempty"`
-	Equipped           bool               `bson:"equipped,omitempty"`
-	Stackable          bool               `bson:"stackable,omitempty"`
-}
-
-// Race represents a character's race
-type Race struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty"`
-	Name        string             `bson:"name,omitempty"`
-	Description string             `bson:"description,omitempty"`
-	Alter       Filter             `bson:"alter,omitempty"`
-}
-
-// Spell represents an individual spell that a character has the ability to learn
-type Spell struct {
-	ID            primitive.ObjectID   `bson:"_id,omitempty"`
-	Name          string               `bson:"name,omitempty"`
-	Description   string               `bson:"description,omitempty"`
-	CastingTime   string               `bson:"castingTime,omitempty"`
-	Classes       []primitive.ObjectID `bson:"classes,omitempty"`
-	Components    string               `bson:"components,omitempty"`
-	Concentration bool                 `bson:"concentration,omitempty"`
-	Duration      string               `bson:"duration,omitempty"`
-	Level         int                  `bson:"level,omitempty"`
-	Use           Filter               `bson:"use,omitempty"`
+	First   []primitive.ObjectID `bson:"1,omitempty"`
+	Second  []primitive.ObjectID `bson:"2,omitempty"`
+	Third   []primitive.ObjectID `bson:"3,omitempty"`
+	Fourth  []primitive.ObjectID `bson:"4,omitempty"`
+	Fifth   []primitive.ObjectID `bson:"5,omitempty"`
+	Sixth   []primitive.ObjectID `bson:"6,omitempty"`
+	Seventh []primitive.ObjectID `bson:"7,omitempty"`
+	Eighth  []primitive.ObjectID `bson:"8,omitempty"`
+	Ninth   []primitive.ObjectID `bson:"9,omitempty"`
 }
