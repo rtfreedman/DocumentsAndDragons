@@ -6,6 +6,7 @@ import (
 	"log"
 	"syscall"
 
+	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -13,7 +14,9 @@ import (
 var db *mongo.Database
 var abilityCollection *mongo.Collection
 var backgroundCollection *mongo.Collection
+var classCollection *mongo.Collection
 var characterCollection *mongo.Collection
+var baseCharacterCollection *mongo.Collection
 var itemCollection *mongo.Collection
 var raceCollection *mongo.Collection
 var spellCollection *mongo.Collection
@@ -27,23 +30,29 @@ func init() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	abilityCollection = db.Collection("ability")
-	spellCollection = db.Collection("spell")
-	raceCollection = db.Collection("race")
-	backgroundCollection = db.Collection("background")
-	itemCollection = db.Collection("items")
+	abilityCollection = db.Collection("abilities")
+	backgroundCollection = db.Collection("backgrounds")
+	classCollection = db.Collection("classes")
 	characterCollection = db.Collection("characters")
-	collectionMap = map[string]*mongo.Collection{
-		"ability":    abilityCollection,
-		"background": backgroundCollection,
-		"character":  characterCollection,
-		"item":       itemCollection,
-		"race":       raceCollection,
-		"spell":      spellCollection,
+	baseCharacterCollection = db.Collection("baseCharacters")
+	itemCollection = db.Collection("items")
+	raceCollection = db.Collection("races")
+	spellCollection = db.Collection("spells")
+	heavyArmor := Item{
+		Name: "Heavy Armor",
+		Equip: bson.A{
+			bson.D{
+				{"$set", bson.E{"ArmorClass", 15}},
+			},
+		},
 	}
-	character := Document{
+	err = AddItem(context.Background(), &heavyArmor)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	character := Character{
 		Name:       "Rorik Ironforge",
-		ArmorClass: 15,
+		ArmorClass: 10,
 		AbilityScores: AbilityScores{
 			STR: 24,
 			CON: 24,
@@ -51,8 +60,18 @@ func init() {
 			CHA: 14,
 			WIS: 14,
 		},
+		Inventory: Inventory{
+			Items: []Item{
+				Item{
+					ID: heavyArmor.ID,
+				},
+			},
+		},
 	}
-	fmt.Println(AddCharacter(context.Background(), &character))
+	err = AddCharacter(context.Background(), &character)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 }
 
 func getPassword() string {

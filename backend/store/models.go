@@ -1,6 +1,7 @@
 package store
 
 import (
+	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
 
@@ -13,6 +14,7 @@ type Ability struct {
 	MaxCharges        int                `bson:"maxCharges,omitempty"`
 	RechargeCondition int                `bson:"rechargeCondition,omitempty"`
 	Active            bool               `bson:"active,omitempty"` // vs passive
+	Use               bson.A             `bson:"use,omitempty"`
 }
 
 // AbilityScores represents the ability scores of a character
@@ -31,16 +33,18 @@ type Background struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty"`
 	Name        string             `bson:"name,omitempty"`
 	Description string             `bson:"description,omitempty"`
+	Update      bson.A             `bson:"update,omitempty"`
 }
 
 // Class represents a character's class
 type Class struct {
-	ID    primitive.ObjectID `bson:"_id,omitempty"`
-	Level int                `bson:"level,omitempty"`
+	ID     primitive.ObjectID `bson:"_id,omitempty"`
+	Level  int                `bson:"level,omitempty"`
+	Update bson.A             `bson:"update,omitempty"`
 }
 
-// Document represents the shape of documents we expect out of mongo
-type Document struct {
+// Character represents the shape of a character we expect out of mongo
+type Character struct {
 	ID              primitive.ObjectID `bson:"_id,omitempty"`
 	User            primitive.ObjectID `bson:"user,omitempty"`
 	Campaign        primitive.ObjectID `bson:"campaign,omitempty"`
@@ -73,8 +77,7 @@ type Document struct {
 
 // Inventory is a character's inventory
 type Inventory struct {
-	IncrementalID int    `bson:"incrementalID,omitempty"`
-	items         []Item `bson:"items,omitempty"`
+	Items []Item `bson:"items,omitempty"`
 }
 
 // Item represents one of a character's items
@@ -93,6 +96,8 @@ type Item struct {
 	Weight             int                `bson:"weight,omitempty"`
 	Equipped           bool               `bson:"equipped,omitempty"`
 	Stackable          bool               `bson:"stackable,omitempty"`
+	Equip              bson.A             `bson:"equip,omitempty"`
+	Use                bson.A             `bson:"use,omitempty"`
 }
 
 // Race represents a character's race
@@ -100,6 +105,7 @@ type Race struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty"`
 	Name        string             `bson:"name,omitempty"`
 	Description string             `bson:"description,omitempty"`
+	Update      bson.A             `bson:"update,omitempty"`
 }
 
 // Spell represents an individual spell that a character has the ability to learn
@@ -112,6 +118,7 @@ type Spell struct {
 	Concentration bool               `bson:"concentration,omitempty"`
 	Duration      string             `bson:"duration,omitempty"`
 	Level         int                `bson:"level,omitempty"`
+	Cast          bson.A             `bson:"cast,omitempty"`
 }
 
 // Spells represent a character's spell shapes
