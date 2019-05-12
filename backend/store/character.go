@@ -67,56 +67,16 @@ func RebuildCharacter(characterIdentifier string) (c *Character, err error) {
 	// TODO: Retrieve class changes
 	// TODO: Retrieve spell changes
 	// TODO: Retrieve ability changes
-	// TODO: Retrieve item changes
+	// retrieve the items to the character's inventory
 	err = c.getItemsFromMap(m)
-	// handle the inventory
-	return
-}
-
-func (c *Character) getItemsFromMap(m map[string]interface{}) (err error) {
-	// extract the items from the character's inventory from base characters
-	val, ok := m["items"]
-	if !ok {
-		// if the inventory doesn't exist just return. it's not a big deal
-		return
-	}
-	// comes back as a bson.A
-	inventory, ok := val.(bson.A)
-	if !ok {
-		// we return an error here because we know the items exist, but the inventory is malformed
-		return errors.New("inventory malformed")
-	}
-	// we iterate over the items int he inventory
-	for _, itemInterface := range inventory {
-		// and convert them eventually to a map that we can mold into the character inventory properly
-		item, ok := itemInterface.(bson.D)
-		if !ok {
-			// TODO: log an error here
-			continue
-		}
-		// now we add that item to the map
-		if err = c.addItemToInventory(item); err != nil {
-			// TODO: log an error here
-			continue
+	// equip all equipped items
+	for _, item := range c.Items {
+		if item.Equipped {
+			if err = c.equipItem(item); err != nil {
+				return
+			}
 		}
 	}
-
-	return errors.New("implementing")
-}
-
-func (c *Character) addItemToInventory(item bson.D) (err error) {
-	itemMap := item.Map()
-	var id primitive.ObjectID
-	if idInterface, ok := itemMap["_id"]; !ok {
-		return errors.New("no id in item")
-	} else if id, ok = idInterface.(primitive.ObjectID); !ok {
-		return errors.New("malformed id in item")
-	}
-	baseItem, err := FindItem(id)
-	if err != nil {
-		return
-	}
-	_ = baseItem
 	return
 }
 
