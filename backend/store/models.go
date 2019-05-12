@@ -17,17 +17,6 @@ type Ability struct {
 	Use               bson.A             `bson:"use,omitempty"`
 }
 
-// AbilityScores represents the ability scores of a character
-// not really necessary but is cleaner than using a map
-type AbilityScores struct {
-	STR int `bson:"str,omitempty"`
-	DEX int `bson:"dex,omitempty"`
-	CON int `bson:"con,omitempty"`
-	INT int `bson:"int,omitempty"`
-	WIS int `bson:"wis,omitempty"`
-	CHA int `bson:"cha,omitempty"`
-}
-
 // Background represents a character's background
 type Background struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty"`
@@ -51,7 +40,12 @@ type Character struct {
 	Name            string             `bson:"name,omitempty"`
 	Advantages      []string           `bson:"disadvantages,omitempty"`
 	Disadvantages   []string           `bson:"advantages,omitempty"`
-	AbilityScores   AbilityScores      `bson:"abilityScores,omitempty"`
+	STR             int                `bson:"str,omitempty"`
+	DEX             int                `bson:"dex,omitempty"`
+	CON             int                `bson:"con,omitempty"`
+	INT             int                `bson:"int,omitempty"`
+	WIS             int                `bson:"wis,omitempty"`
+	CHA             int                `bson:"cha,omitempty"`
 	ArmorClass      int                `bson:"armorClass,omitempty"`
 	Proficient      []string           `bson:"proficient,omitempty"` // proficiencies is derived from proficient
 	BaseHitpoints   int                `bson:"baseHitpoints,omitempty"`
@@ -68,16 +62,11 @@ type Character struct {
 	Race            Race               `bson:"race,omitempty"`
 	Background      Background         `bson:"background,omitempty"`
 	Classes         []Class            `bson:"class,omitempty"`
-	Inventory       Inventory          `bson:"inventory,omitempty"`
+	Items           []Item             `bson:"items,omitempty"`
 	Abilities       []Ability          `bson:"abilities,omitempty"`
 	Spells          Spells             `bson:"spells,omitempty"`
 	SpellSlots      Spells             `bson:"spellSlots,omitempty"`
 	AvailableSpells AvailableSpells    `bson:"availableSpells,omitempty"`
-}
-
-// Inventory is a character's inventory
-type Inventory struct {
-	Items []Item `bson:"items,omitempty"`
 }
 
 // Item represents one of a character's items
