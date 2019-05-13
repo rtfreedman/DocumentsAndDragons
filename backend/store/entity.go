@@ -1,14 +1,13 @@
 package store
 
 import (
-	"context"
 	"errors"
 
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
 
 // AddAbility adds a new ability to mongo
-func AddAbility(ctx context.Context, doc *Ability) (err error) {
+func AddAbility(doc *Ability) (err error) {
 	var ok bool
 	if result, err := abilityCollection.InsertOne(ctx, doc); err != nil {
 		return err
@@ -19,7 +18,7 @@ func AddAbility(ctx context.Context, doc *Ability) (err error) {
 }
 
 // AddBackground adds a new background to mongo
-func AddBackground(ctx context.Context, doc *Background) (err error) {
+func AddBackground(doc *Background) (err error) {
 	var ok bool
 	if result, err := backgroundCollection.InsertOne(ctx, doc); err != nil {
 		return err
@@ -30,7 +29,7 @@ func AddBackground(ctx context.Context, doc *Background) (err error) {
 }
 
 // AddClass adds a new class to mongo
-func AddClass(ctx context.Context, doc *Class) (err error) {
+func AddClass(doc *Class) (err error) {
 	var ok bool
 	if result, err := classCollection.InsertOne(ctx, doc); err != nil {
 		return err
@@ -41,7 +40,7 @@ func AddClass(ctx context.Context, doc *Class) (err error) {
 }
 
 // AddCharacter adds a new character to mongo
-func AddCharacter(ctx context.Context, doc *Character) (err error) {
+func AddCharacter(doc *Character) (err error) {
 	var ok bool
 	if result, err := baseCharacterCollection.InsertOne(ctx, doc); err != nil {
 		return err
@@ -52,7 +51,7 @@ func AddCharacter(ctx context.Context, doc *Character) (err error) {
 }
 
 // AddItem adds a new item to mongo
-func AddItem(ctx context.Context, doc *Item) (err error) {
+func AddItem(doc *Item) (err error) {
 	var ok bool
 	if result, err := itemCollection.InsertOne(ctx, doc); err != nil {
 		return err
@@ -63,7 +62,7 @@ func AddItem(ctx context.Context, doc *Item) (err error) {
 }
 
 // AddRace adds a new race to mongo
-func AddRace(ctx context.Context, doc *Race) (err error) {
+func AddRace(doc *Race) (err error) {
 	var ok bool
 	if result, err := raceCollection.InsertOne(ctx, doc); err != nil {
 		return err
@@ -74,7 +73,7 @@ func AddRace(ctx context.Context, doc *Race) (err error) {
 }
 
 // AddSpell adds a new spell to mongo
-func AddSpell(ctx context.Context, doc *Spell) (err error) {
+func AddSpell(doc *Spell) (err error) {
 	var ok bool
 	if result, err := spellCollection.InsertOne(ctx, doc); err != nil {
 		return err

@@ -2,11 +2,12 @@ package store
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"syscall"
 
+	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -24,12 +25,12 @@ var campaignCollection *mongo.Collection
 
 var collectionMap map[string]*mongo.Collection
 
-var backgroundContext = context.Background()
+var ctx = context.Background()
 
 func init() {
 	fmt.Println("Initiating mongo driver...")
 	var err error
-	db, err = configDB(context.Background(), false, "", "127.0.0.1", "27041", "dnddb")
+	db, err = configDB(ctx, false, "", "127.0.0.1", "27041", "dnddb")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -41,54 +42,58 @@ func init() {
 	itemCollection = db.Collection("items")
 	raceCollection = db.Collection("races")
 	spellCollection = db.Collection("spells")
-	// heavyArmor := Item{
-	// 	Name: "Heavy Armor",
-	// 	Equip: bson.A{
-	// 		bson.D{
-	// 			{"$set", bson.E{"ArmorClass", 15}},
-	// 		},
-	// 	},
-	// }
-	// err = AddItem(context.Background(), &heavyArmor)
-	// if err != nil {
-	// 	log.Fatal(err.Error())
-	// }
-	// onehex, err := primitive.ObjectIDFromHex("111111111111111111111111")
-	// if err != nil {
-	// 	log.Fatal(err.Error())
-	// }
-	// character := Character{
-	// 	User:       onehex,
-	// 	Campaign:   onehex,
-	// 	Name:       "Rorik Ironforge",
-	// 	ArmorClass: 10,
-	// 	STR:        24,
-	// 	CON:        24,
-	// 	DEX:        10,
-	// 	CHA:        14,
-	// 	WIS:        14,
-	// 	Items: []Item{
-	// 		Item{
-	// 			ID:       heavyArmor.ID,
-	// 			Equipped: true,
-	// 		},
-	// 		Item{
-	// 			ID:    heavyArmor.ID,
-	// 			Count: 2,
-	// 		},
-	// 	},
-	// }
-	// err = AddCharacter(context.Background(), &character)
-	// if err != nil {
-	// 	log.Fatal(err.Error())
-	// }
-	if c, err := FindCharacter("5cd84d2a4c4acdc23971b543"); err != nil {
-		log.Fatal(err.Error())
-	} else {
-		b, _ := json.Marshal(c)
-		fmt.Println(string(b))
+	// TODO: remove when no longer deving
+	// ~~~~~NO SERIOUSLY REMOVE THIS BITCH~~~~~
+	defer itemCollection.DeleteMany(ctx, bson.D{{}})
+	defer characterCollection.DeleteMany(ctx, bson.D{{}})
+	defer baseCharacterCollection.DeleteMany(ctx, bson.D{{}})
+	heavyArmor := Item{
+		Name: "Heavy Armor",
+		Equip: bson.A{
+			bson.D{
+				{"$set", bson.D{{"armorClass", 15}}},
+			},
+		},
 	}
-	log.Fatal(":)")
+	err = AddItem(&heavyArmor)
+	if err != nil {
+		panic(err.Error())
+	}
+	onehex, err := primitive.ObjectIDFromHex("111111111111111111111111")
+	if err != nil {
+		panic(err.Error())
+	}
+	character := Character{
+		User:       onehex,
+		Campaign:   onehex,
+		Name:       "Rorik Ironforge",
+		ArmorClass: 10,
+		STR:        24,
+		CON:        24,
+		DEX:        10,
+		CHA:        14,
+		WIS:        14,
+		Items: []Item{
+			Item{
+				ID:       heavyArmor.ID,
+				Equipped: true,
+			},
+			Item{
+				ID:    heavyArmor.ID,
+				Count: 2,
+			},
+		},
+	}
+	err = AddCharacter(&character)
+	if err != nil {
+		panic(err.Error())
+	}
+	if c, err := FindCharacter(character.ID.Hex()); err != nil {
+		panic(err.Error())
+	} else {
+		fmt.Println(c.ArmorClass)
+	}
+	panic(":)")
 }
 
 func getPassword() string {

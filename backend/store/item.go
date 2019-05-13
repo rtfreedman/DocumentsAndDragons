@@ -2,6 +2,7 @@ package store
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
@@ -10,7 +11,7 @@ import (
 // FindItem will find an item according to the objectid supplied
 func FindItem(id primitive.ObjectID) (item *Item, err error) {
 	item = new(Item)
-	result := itemCollection.FindOne(backgroundContext, bson.D{{"_id", id}})
+	result := itemCollection.FindOne(ctx, bson.D{{"_id", id}})
 	err = result.Decode(&item)
 	return
 }
@@ -67,8 +68,16 @@ func (c *Character) EquipItem(inventoryID int) (err error) {
 
 func (c *Character) equipItem(item Item) (err error) {
 	for _, equip := range item.Equip {
-		if _, err = characterCollection.UpdateOne(backgroundContext, bson.D{{"_id", c.ID}}, equip); err != nil {
-			return
+		equipD, ok := equip.(bson.D)
+		if !ok {
+			return errors.New("bad equip for item")
+		}
+		fmt.Println(equipD)
+		fmt.Println(c.ID)
+		if result, err := characterCollection.UpdateOne(ctx, bson.D{{"_id", c.ID}}, equipD); err != nil {
+			return err
+		} else if result.MatchedCount != 1 {
+			return errors.New("no item found")
 		}
 	}
 	return

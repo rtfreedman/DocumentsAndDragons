@@ -19,7 +19,7 @@ func getCharacterFromCollection(characterIdentifier string, collection *mongo.Co
 	}
 	// find the character in the collection
 	filter := bson.D{{"_id", id}}
-	result := collection.FindOne(backgroundContext, filter)
+	result := collection.FindOne(ctx, filter)
 	// decode into the character, if there's an error give it back
 	err = result.Decode(c)
 	return
@@ -48,7 +48,7 @@ func RebuildCharacter(characterIdentifier string) (c *Character, err error) {
 	}
 	// find the character in the collection
 	filter := bson.D{{"_id", id}}
-	result := baseCharacterCollection.FindOne(backgroundContext, filter)
+	result := baseCharacterCollection.FindOne(ctx, filter)
 	// decode into the character, if there's an error give it back
 	if err = result.Decode(&m); err != nil {
 		return
@@ -69,6 +69,13 @@ func RebuildCharacter(characterIdentifier string) (c *Character, err error) {
 	// TODO: Retrieve ability changes
 	// retrieve the items to the character's inventory
 	err = c.getItemsFromMap(m)
+	// add character to mongo
+	var ok bool
+	if result, err := characterCollection.InsertOne(ctx, c); err != nil {
+		return nil, err
+	} else if c.ID, ok = result.InsertedID.(primitive.ObjectID); !ok {
+		return nil, errors.New("bad result id on return from character insert")
+	}
 	// equip all equipped items
 	for _, item := range c.Items {
 		if item.Equipped {
@@ -77,6 +84,9 @@ func RebuildCharacter(characterIdentifier string) (c *Character, err error) {
 			}
 		}
 	}
+	// retrieve finalized character from characters collection and put it into c
+	result = characterCollection.FindOne(ctx, bson.D{{"_id", c.ID}})
+	err = result.Decode(c)
 	return
 }
 
