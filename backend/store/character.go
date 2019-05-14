@@ -27,11 +27,8 @@ func getCharacterFromCollection(characterIdentifier string, collection *mongo.Co
 
 // FindCharacter finds a character and returns that character object
 func FindCharacter(characterIdentifier string) (c *Character, err error) {
-	// if we have an already built character return that object from mongo
-	if c, err = getCharacterFromCollection(characterIdentifier, characterCollection); err != nil {
-		// if we get an error we're going to try to rebuild that character from the base character
-		c, err = RebuildCharacter(characterIdentifier)
-	}
+	// TODO: check for a cached character. this requires some async lookups, a map, and some locking control in colleciton.go
+	c, err = RebuildCharacter(characterIdentifier)
 	return
 }
 
@@ -69,7 +66,17 @@ func RebuildCharacter(characterIdentifier string) (c *Character, err error) {
 	// TODO: Retrieve ability changes
 	// retrieve the items to the character's inventory
 	err = c.getItemsFromMap(m)
-	// add character to mongo
+	// get a character collection to work with from mongo
+	characterCollection, err := checkoutCollection()
+	if err != nil {
+		return
+	}
+	// return that collection no matter what
+	defer returnCollection(characterCollection)
+	// clear this collection
+	if err = clearCollection(characterCollection); err != nil {
+		return
+	}
 	var ok bool
 	if result, err := characterCollection.InsertOne(ctx, c); err != nil {
 		return nil, err
@@ -77,6 +84,7 @@ func RebuildCharacter(characterIdentifier string) (c *Character, err error) {
 		return nil, errors.New("bad result id on return from character insert")
 	}
 	// equip all equipped items
+	// TODO: order by equip priority
 	for _, item := range c.Items {
 		if item.Equipped {
 			if err = c.equipItem(item); err != nil {

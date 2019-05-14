@@ -84,6 +84,7 @@ type Item struct {
 	Count              int                `bson:"count,omitempty"`
 	Weight             int                `bson:"weight,omitempty"`
 	Equipped           bool               `bson:"equipped,omitempty"`
+	EquipPriority      int                `bson:"equipPriority,omitempty"`
 	Stackable          bool               `bson:"stackable,omitempty"`
 	Equip              bson.A             `bson:"equip,omitempty"`
 	Use                bson.A             `bson:"use,omitempty"`

@@ -74,11 +74,12 @@ func (c *Character) equipItem(item Item) (err error) {
 		}
 		fmt.Println(equipD)
 		fmt.Println(c.ID)
-		if result, err := characterCollection.UpdateOne(ctx, bson.D{{"_id", c.ID}}, equipD); err != nil {
-			return err
-		} else if result.MatchedCount != 1 {
-			return errors.New("no item found")
-		}
+		// TODO: aggregate don't update
+		// if result, err := characterCollection.UpdateOne(ctx, bson.D{{"_id", c.ID}}, equipD); err != nil {
+		// 	return err
+		// } else if result.MatchedCount != 1 {
+		// 	return errors.New("no item found")
+		// }
 	}
 	return
 }
@@ -155,6 +156,10 @@ func (c *Character) addItemToInventory(item bson.D) (err error) {
 		case "equipped":
 			if val, ok := value.(bool); ok {
 				baseItem.Equipped = val
+			}
+		case "equipPriority":
+			if val, ok := value.(int); ok {
+				baseItem.EquipPriority = val
 			}
 		case "stackable":
 			if val, ok := value.(bool); ok {

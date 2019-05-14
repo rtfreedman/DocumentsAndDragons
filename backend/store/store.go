@@ -13,17 +13,6 @@ import (
 )
 
 var db *mongo.Database
-var abilityCollection *mongo.Collection
-var backgroundCollection *mongo.Collection
-var classCollection *mongo.Collection
-var characterCollection *mongo.Collection
-var baseCharacterCollection *mongo.Collection
-var itemCollection *mongo.Collection
-var raceCollection *mongo.Collection
-var spellCollection *mongo.Collection
-var campaignCollection *mongo.Collection
-
-var collectionMap map[string]*mongo.Collection
 
 var ctx = context.Background()
 
@@ -34,25 +23,15 @@ func init() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	abilityCollection = db.Collection("abilities")
-	backgroundCollection = db.Collection("backgrounds")
-	classCollection = db.Collection("classes")
-	characterCollection = db.Collection("characters")
-	baseCharacterCollection = db.Collection("baseCharacters")
-	itemCollection = db.Collection("items")
-	raceCollection = db.Collection("races")
-	spellCollection = db.Collection("spells")
+	initCollections()
 	// TODO: remove when no longer deving
 	// ~~~~~NO SERIOUSLY REMOVE THIS BITCH~~~~~
 	defer itemCollection.DeleteMany(ctx, bson.D{{}})
-	defer characterCollection.DeleteMany(ctx, bson.D{{}})
 	defer baseCharacterCollection.DeleteMany(ctx, bson.D{{}})
 	heavyArmor := Item{
 		Name: "Heavy Armor",
 		Equip: bson.A{
-			bson.D{
-				{"$set", bson.D{{"armorClass", 15}}},
-			},
+			bson.M{"$set": bson.M{"armorClass": 15}},
 		},
 	}
 	err = AddItem(&heavyArmor)

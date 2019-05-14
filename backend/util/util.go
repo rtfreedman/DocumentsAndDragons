@@ -1,10 +1,22 @@
 package util
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 )
+
+// RandomHex generates a random hex string of length n
+func RandomHex(n int) (s string, err error) {
+	b := make([]byte, n)
+	if _, err = rand.Read(b); err != nil {
+		return
+	}
+	s = hex.EncodeToString(b)
+	return
+}
 
 // ReadJSONRequestBody reads a http Request body and attempts to unmarshal it the object at v
 func ReadJSONRequestBody(r *http.Request, v interface{}) error {
