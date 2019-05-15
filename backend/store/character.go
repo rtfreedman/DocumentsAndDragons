@@ -27,8 +27,11 @@ func getCharacterFromCollection(characterIdentifier string, collection *mongo.Co
 
 // FindCharacter finds a character and returns that character object
 func FindCharacter(characterIdentifier string) (c *Character, err error) {
-	// TODO: check for a cached character. this requires some async lookups, a map, and some locking control in colleciton.go
-	c, err = RebuildCharacter(characterIdentifier)
+	if c, err = getCharacterFromCollection(characterIdentifier, characterCollection); err == mongo.ErrNoDocuments {
+		c, err = RebuildCharacter(characterIdentifier)
+	} else if err != nil {
+		return
+	}
 	return
 }
 
@@ -65,29 +68,30 @@ func RebuildCharacter(characterIdentifier string) (c *Character, err error) {
 	// TODO: Retrieve spell changes
 	// TODO: Retrieve ability changes
 	// retrieve the items to the character's inventory
-	err = c.getItemsFromMap(m)
-	// get a character collection to work with from mongo
-	characterCollection, err := checkoutCollection()
-	if err != nil {
-		return
-	}
-	// return that collection no matter what
-	defer returnCollection(characterCollection)
-	// clear this collection
-	if err = clearCollection(characterCollection); err != nil {
-		return
-	}
 	var ok bool
 	if result, err := characterCollection.InsertOne(ctx, c); err != nil {
 		return nil, err
 	} else if c.ID, ok = result.InsertedID.(primitive.ObjectID); !ok {
 		return nil, errors.New("bad result id on return from character insert")
 	}
-	// equip all equipped items
-	// TODO: order by equip priority
+	// equip all equipped items in order of their priority
+	priorityOrdering := [][]Item{}
 	for _, item := range c.Items {
 		if item.Equipped {
-			if err = c.equipItem(item); err != nil {
+			// append to priority ordering until we get a sufficient length slice
+			for len(priorityOrdering) < item.EquipPriority+1 {
+				priorityOrdering = append(priorityOrdering, []Item{})
+			}
+			// insert this element appropriately
+			priorityOrdering[item.EquipPriority] = append(priorityOrdering[item.EquipPriority], item)
+		}
+	}
+	// 0 is equipped first 9999 last
+	for _, items := range priorityOrdering {
+		// items with the same priority are equipped simultaneously
+		for _, item := range items {
+			if err = c.EquipItem(item.InventoryID); err != nil {
+				// TODO: we could just unequip the item and continue?
 				return
 			}
 		}
