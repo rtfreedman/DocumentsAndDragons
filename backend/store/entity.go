@@ -50,17 +50,6 @@ func AddCharacter(doc *Character) (err error) {
 	return
 }
 
-// AddItem adds a new item to mongo
-func AddItem(doc *Item) (err error) {
-	var ok bool
-	if result, err := itemCollection.InsertOne(ctx, doc); err != nil {
-		return err
-	} else if doc.ID, ok = result.InsertedID.(primitive.ObjectID); !ok {
-		return errors.New("bad insert id returned")
-	}
-	return
-}
-
 // AddRace adds a new race to mongo
 func AddRace(doc *Race) (err error) {
 	var ok bool

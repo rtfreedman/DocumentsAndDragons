@@ -10,6 +10,17 @@ import (
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
 
+// AddItem adds a new item to mongo
+func AddItem(doc *Item) (err error) {
+	var ok bool
+	if result, err := itemCollection.InsertOne(ctx, doc); err != nil {
+		return err
+	} else if doc.ID, ok = result.InsertedID.(primitive.ObjectID); !ok {
+		return errors.New("bad insert id returned")
+	}
+	return
+}
+
 // FindItem will find an item according to the objectid supplied
 func FindItem(id primitive.ObjectID) (item *Item, err error) {
 	item = new(Item)
