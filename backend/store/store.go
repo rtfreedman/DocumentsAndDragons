@@ -30,8 +30,11 @@ func init() {
 	defer baseCharacterCollection.DeleteMany(ctx, bson.D{{}})
 	heavyArmor := Item{
 		Name: "Heavy Armor",
+		EquipAggregate: bson.A{
+			bson.M{"$addFields": bson.M{"armorClass": 15}},
+		},
 		Equip: bson.A{
-			bson.M{"$set": bson.M{"armorClass": 15}},
+			bson.M{"$push": bson.M{"disadvantages": "stealth"}},
 		},
 	}
 	err = AddItem(&heavyArmor)

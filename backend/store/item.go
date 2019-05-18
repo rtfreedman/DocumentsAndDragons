@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/mongodb/mongo-go-driver/mongo/options"
+
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
@@ -23,6 +25,13 @@ func FindItemFromString(idString string) (item *Item, err error) {
 		return nil, err
 	}
 	return FindItem(id)
+}
+
+// CanEquipItem returns whether or not a character can equip the item
+// if the character can equip the item err will be nil
+// else the error will corrspond to the reason the character cannot equip the item
+func (c *Character) CanEquipItem(item Item) (err error) {
+	return nil
 }
 
 func (c *Character) getItemsFromMap(m map[string]interface{}) (err error) {
@@ -53,7 +62,7 @@ func (c *Character) getItemsFromMap(m map[string]interface{}) (err error) {
 		}
 	}
 
-	return errors.New("implementing")
+	return
 }
 
 // EquipItem will equip a character's item
@@ -66,20 +75,50 @@ func (c *Character) EquipItem(inventoryID int) (err error) {
 	return errors.New("not implemented")
 }
 
+func (c *Character) runEquipAggregate(item Item) (err error) {
+	equip := append([]interface{}{
+		bson.M{
+			"$match": bson.M{
+				"_id": c.ID,
+			},
+		},
+	}, item.EquipAggregate...)
+	fmt.Println(equip)
+	cursor, err := characterCollection.Aggregate(ctx, equip)
+	if err != nil {
+		return
+	}
+	defer cursor.Close(ctx)
+	if !cursor.Next(ctx) {
+		return errors.New("no character found after aggregate")
+	}
+	if err = cursor.Decode(&c); err != nil {
+		return
+	}
+	if cursor.Next(ctx) {
+		return errors.New("multiple characters found after aggregate")
+	}
+	t := true
+	characterCollection.InsertOne(ctx, *c, &options.InsertOneOptions{&t})
+	return
+}
+
 func (c *Character) equipItem(item Item) (err error) {
-	for _, equip := range item.Equip {
-		equipD, ok := equip.(bson.D)
-		if !ok {
-			return errors.New("bad equip for item")
+	if len(item.EquipAggregate) != 0 {
+		if err = c.runEquipAggregate(item); err != nil {
+			return
 		}
-		fmt.Println(equipD)
-		fmt.Println(c.ID)
-		// TODO: aggregate don't update
-		// if result, err := characterCollection.UpdateOne(ctx, bson.D{{"_id", c.ID}}, equipD); err != nil {
-		// 	return err
-		// } else if result.MatchedCount != 1 {
-		// 	return errors.New("no item found")
-		// }
+	}
+	if len(item.Equip) != 0 {
+		for index := range item.Equip {
+			after := options.After
+			result := characterCollection.FindOneAndUpdate(ctx, bson.M{"_id": c.ID}, item.Equip[index], &options.FindOneAndUpdateOptions{
+				ReturnDocument: &after,
+			})
+			if err = result.Decode(c); err != nil {
+				return
+			}
+		}
 	}
 	return
 }

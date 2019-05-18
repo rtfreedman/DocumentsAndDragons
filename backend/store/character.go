@@ -54,6 +54,7 @@ func RebuildCharacter(characterIdentifier string) (c *Character, err error) {
 		return
 	}
 	c = &Character{ID: id}
+	// associate the base characteristics with the character object
 	if err = c.copyBaseCharacteristics(m); err != nil {
 		return
 	}
@@ -61,23 +62,27 @@ func RebuildCharacter(characterIdentifier string) (c *Character, err error) {
 	seenIDs := map[primitive.ObjectID]string{}
 	_ = seenIDs
 	// we can build him, we have the technology
-	// TODO: ensure the ordering here is right
-	// TODO: Retrieve race changes
-	// TODO: Retrieve background changes
-	// TODO: Retrieve class changes
-	// TODO: Retrieve spell changes
-	// TODO: Retrieve ability changes
-	// retrieve the items to the character's inventory
+	// put the character in the destination collection
+	// TODO: lock characters for synchronous access/update only
+	if err = c.getItemsFromMap(m); err != nil {
+		return
+	}
 	var ok bool
 	if result, err := characterCollection.InsertOne(ctx, c); err != nil {
 		return nil, err
 	} else if c.ID, ok = result.InsertedID.(primitive.ObjectID); !ok {
 		return nil, errors.New("bad result id on return from character insert")
 	}
+	// TODO: ensure the ordering here is right
+	// TODO: Retrieve race changes
+	// TODO: Retrieve background changes
+	// TODO: Retrieve class changes
+	// TODO: Retrieve spell changes
+	// TODO: Retrieve ability changes
 	// equip all equipped items in order of their priority
 	priorityOrdering := [][]Item{}
 	for _, item := range c.Items {
-		if item.Equipped {
+		if item.Equipped && c.CanEquipItem(item) == nil {
 			// append to priority ordering until we get a sufficient length slice
 			for len(priorityOrdering) < item.EquipPriority+1 {
 				priorityOrdering = append(priorityOrdering, []Item{})
@@ -90,6 +95,9 @@ func RebuildCharacter(characterIdentifier string) (c *Character, err error) {
 	for _, items := range priorityOrdering {
 		// items with the same priority are equipped simultaneously
 		for _, item := range items {
+			if c.CanEquipItem(item) != nil {
+				continue
+			}
 			if err = c.EquipItem(item.InventoryID); err != nil {
 				// TODO: we could just unequip the item and continue?
 				return
