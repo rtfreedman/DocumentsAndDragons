@@ -4,10 +4,57 @@ import (
 	"errors"
 
 	"github.com/mongodb/mongo-go-driver/mongo"
+	"github.com/mongodb/mongo-go-driver/mongo/options"
 
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
+
+func (c *Character) update(update bson.A) (err error) {
+	if len(update) == 0 {
+		return
+	}
+	for index := range update {
+		after := options.After
+		result := characterCollection.FindOneAndUpdate(ctx, bson.M{"_id": c.ID}, update[index], &options.FindOneAndUpdateOptions{
+			ReturnDocument: &after,
+		})
+		if err = result.Decode(c); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (c *Character) aggregateUpdate(update bson.A) (err error) {
+	if len(update) == 0 {
+		return
+	}
+	aggregate := append([]interface{}{
+		bson.M{
+			"$match": bson.M{
+				"_id": c.ID,
+			},
+		},
+	}, update...)
+	cursor, err := characterCollection.Aggregate(ctx, aggregate)
+	if err != nil {
+		return
+	}
+	defer cursor.Close(ctx)
+	if !cursor.Next(ctx) {
+		return errors.New("no character found after aggregate")
+	}
+	if err = cursor.Decode(c); err != nil {
+		return
+	}
+	if cursor.Next(ctx) {
+		return errors.New("multiple characters found after aggregate")
+	}
+	t := true
+	characterCollection.InsertOne(ctx, *c, &options.InsertOneOptions{&t})
+	return
+}
 
 func getCharacterFromCollection(characterIdentifier string, collection *mongo.Collection) (c *Character, err error) {
 	// allocate memory

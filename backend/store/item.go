@@ -2,9 +2,6 @@ package store
 
 import (
 	"errors"
-	"fmt"
-
-	"github.com/mongodb/mongo-go-driver/mongo/options"
 
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
@@ -42,6 +39,7 @@ func FindItemFromString(idString string) (item *Item, err error) {
 // if the character can equip the item err will be nil
 // else the error will corrspond to the reason the character cannot equip the item
 func (c *Character) CanEquipItem(item Item) (err error) {
+	// TODO implement me
 	return nil
 }
 
@@ -80,56 +78,21 @@ func (c *Character) getItemsFromMap(m map[string]interface{}) (err error) {
 func (c *Character) EquipItem(inventoryID int) (err error) {
 	for _, item := range c.Items {
 		if item.InventoryID == inventoryID {
+			if err = c.CanEquipItem(item); err != nil {
+				return
+			}
 			return c.equipItem(item)
 		}
 	}
 	return errors.New("not implemented")
 }
 
-func (c *Character) runEquipAggregate(item Item) (err error) {
-	equip := append([]interface{}{
-		bson.M{
-			"$match": bson.M{
-				"_id": c.ID,
-			},
-		},
-	}, item.EquipAggregate...)
-	fmt.Println(equip)
-	cursor, err := characterCollection.Aggregate(ctx, equip)
-	if err != nil {
-		return
-	}
-	defer cursor.Close(ctx)
-	if !cursor.Next(ctx) {
-		return errors.New("no character found after aggregate")
-	}
-	if err = cursor.Decode(&c); err != nil {
-		return
-	}
-	if cursor.Next(ctx) {
-		return errors.New("multiple characters found after aggregate")
-	}
-	t := true
-	characterCollection.InsertOne(ctx, *c, &options.InsertOneOptions{&t})
-	return
-}
-
 func (c *Character) equipItem(item Item) (err error) {
-	if len(item.EquipAggregate) != 0 {
-		if err = c.runEquipAggregate(item); err != nil {
-			return
-		}
+	if err = c.update(item.Equip); err != nil {
+		return
 	}
-	if len(item.Equip) != 0 {
-		for index := range item.Equip {
-			after := options.After
-			result := characterCollection.FindOneAndUpdate(ctx, bson.M{"_id": c.ID}, item.Equip[index], &options.FindOneAndUpdateOptions{
-				ReturnDocument: &after,
-			})
-			if err = result.Decode(c); err != nil {
-				return
-			}
-		}
+	if err = c.aggregateUpdate(item.EquipAggregate); err != nil {
+		return
 	}
 	return
 }
