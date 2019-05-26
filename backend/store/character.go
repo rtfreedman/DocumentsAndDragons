@@ -10,6 +10,17 @@ import (
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 )
 
+// AddCharacter adds a new character to mongo
+func AddCharacter(doc *Character) (err error) {
+	var ok bool
+	if result, err := baseCharacterCollection.InsertOne(ctx, doc); err != nil {
+		return err
+	} else if doc.ID, ok = result.InsertedID.(primitive.ObjectID); !ok {
+		return errors.New("bad insert id returned")
+	}
+	return
+}
+
 func (c *Character) update(update bson.A) (err error) {
 	if len(update) == 0 {
 		return
