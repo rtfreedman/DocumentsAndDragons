@@ -35,6 +35,12 @@ type Class struct {
 	Aggregate bson.A             `bson:"aggregate,omitempty"`
 }
 
+// Status is a status that is impacting a character
+type Status struct {
+	Effect          bson.A `bson:"effect,omitempty"`
+	EffectAggregate bson.A `bson:"effectAggregate,omitempty"`
+}
+
 // Character represents the shape of a character we expect out of mongo
 type Character struct {
 	ID                  primitive.ObjectID `bson:"_id,omitempty"`
@@ -64,6 +70,7 @@ type Character struct {
 	XP                  int                `bson:"xp,omitempty"`
 	Race                Race               `bson:"race,omitempty"`
 	Background          Background         `bson:"background,omitempty"`
+	StatusEffects       []Status           `bson:"statusEffects,omitempty"`
 	Classes             []Class            `bson:"class,omitempty"`
 	Items               []Item             `bson:"items,omitempty"`
 	Abilities           []Ability          `bson:"abilities,omitempty"`

@@ -75,10 +75,17 @@ func RebuildCharacter(characterIdentifier string) (c *Character, err error) {
 	}
 	// TODO: ensure the ordering here is right
 	// TODO: Retrieve race changes
+	_ = c.Race
 	// TODO: Retrieve background changes
+	_ = c.Background
 	// TODO: Retrieve class changes
-	// TODO: Retrieve spell changes
+	for _, class := range c.Classes {
+		_ = class
+	}
 	// TODO: Retrieve ability changes
+	for _, ability := range c.Abilities {
+		_ = ability
+	}
 	// equip all equipped items in order of their priority
 	priorityOrdering := [][]Item{}
 	for _, item := range c.Items {
@@ -103,6 +110,10 @@ func RebuildCharacter(characterIdentifier string) (c *Character, err error) {
 				return
 			}
 		}
+	}
+	for _, status := range c.StatusEffects {
+		// TODO: apply any statuses on the character
+		_ = status
 	}
 	// retrieve finalized character from characters collection and put it into c
 	result = characterCollection.FindOne(ctx, bson.D{{"_id", c.ID}})
